@@ -16,7 +16,7 @@ func (s *Store) Posts() ([]storage.Post, error) {
 	return posts, nil
 }
 
-func (s *Store) PostsN(count int) ([]storage.Post, error) {
+func (s *Store) PostsLatestN(count int) ([]storage.Post, error) {
 	result := []storage.Post{}
 	for i := 0; i <= count; i++ {
 		if len(posts) <= i {
@@ -25,6 +25,14 @@ func (s *Store) PostsN(count int) ([]storage.Post, error) {
 		result = append(result, posts[i])
 	}
 	return result, nil
+}
+
+// получение новости n подробно
+func (s *Store) PostsDetailedN(n int) (storage.Post, error) {
+	if len(posts) <= n {
+		return posts[0], nil
+	}
+	return posts[n], nil
 }
 
 // получение публикаций по фильтру

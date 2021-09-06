@@ -42,8 +42,9 @@ type Comment struct {
 
 // Interface задаёт контракт на работу с БД.
 type Interface interface {
-	Posts() ([]Post, error)     // получение всех публикаций
-	PostsN(int) ([]Post, error) // получение n последних публикаций
+	Posts() ([]Post, error)           // получение всех публикаций
+	PostsDetailedN(int) (Post, error) // получение новости n подробно
+	PostsLatestN(int) ([]Post, error) // получение страницы n последних публикаций
 	PostsByFilter(string, string,
 		int, int) ([]Post, error) // получение публикаций по фильтру
 	AddPost(Post) error    // создание новой публикации
