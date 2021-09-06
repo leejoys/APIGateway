@@ -36,7 +36,9 @@ func (api *API) endpoints() {
 	//метод получения детальной новости,
 	api.r.HandleFunc("/news/detailed", api.detailed).Methods(http.MethodGet)
 	//метод добавления комментария.
-	//api.r.HandleFunc("/news/{n}", api.posts).Methods(http.MethodGet)
+
+	//метод получения комментариев по id новости.
+	api.r.HandleFunc("/comments/{id}", api.comments).Methods(http.MethodGet)
 }
 
 // Получение маршрутизатора запросов.
@@ -125,5 +127,24 @@ func (api *API) detailed(w http.ResponseWriter, r *http.Request) {
 	w.Write(bytes)
 }
 
-//метод добавления комментария.
-//api.r.HandleFunc("/news/{n}", api.posts).Methods(http.MethodGet)
+//метод получения комментария по id.
+//localhost:8080/comments/1
+func (api *API) comments(w http.ResponseWriter, r *http.Request) {
+	idS := mux.Vars(r)["id"]
+	id, err := strconv.Atoi(idS)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	comments, err := api.db.Comments(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	bytes, err := json.Marshal(comments)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(bytes)
+}
