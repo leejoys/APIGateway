@@ -1,6 +1,8 @@
 package memdb
 
-import "apigateway/pkg/storage"
+import (
+	"apigateway/pkg/storage"
+)
 
 // Хранилище данных.
 type Store struct{}
@@ -14,8 +16,15 @@ func (s *Store) Posts() ([]storage.Post, error) {
 	return posts, nil
 }
 
-func (s *Store) PostsN(int) ([]storage.Post, error) {
-	return posts, nil
+func (s *Store) PostsN(n int) ([]storage.Post, error) {
+	result := []storage.Post{}
+	for i := 0; i <= n; i++ {
+		if len(posts) <= i {
+			break
+		}
+		result = append(result, posts[i])
+	}
+	return result, nil
 }
 
 func (s *Store) AddPost(storage.Post) error {
@@ -40,5 +49,10 @@ var posts = []storage.Post{
 		ID:      2,
 		Title:   "The Go Memory Model",
 		Content: "The Go memory model specifies the conditions under which reads of a variable in one goroutine can be guaranteed to observe values produced by writes to the same variable in a different goroutine.",
+	},
+	{
+		ID:      3,
+		Title:   "Third post",
+		Content: "Third post content.",
 	},
 }

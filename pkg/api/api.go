@@ -27,8 +27,10 @@ func New() *API {
 
 // Регистрация обработчиков API.
 func (api *API) endpoints() {
+	//test
+	api.r.HandleFunc("/test", api.test).Methods(http.MethodGet)
 	//метод вывода списка новостей,
-	api.r.HandleFunc("/news/latest?page={n}", api.latest).Methods(http.MethodGet)
+	api.r.HandleFunc("/news/latest", api.latest).Methods(http.MethodGet)
 	//метод фильтра новостей,
 	//api.r.HandleFunc("/news/{n}", api.posts).Methods(http.MethodGet)
 	//метод получения детальной новости,
@@ -43,9 +45,14 @@ func (api *API) Router() *mux.Router {
 	return api.r
 }
 
+//test
+func (api *API) test(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("test OK"))
+}
+
 //метод вывода списка новостей,
 func (api *API) latest(w http.ResponseWriter, r *http.Request) {
-	ns := mux.Vars(r)["n"]
+	ns := r.URL.Query().Get("page")
 	n, err := strconv.Atoi(ns)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -70,3 +77,5 @@ func (api *API) latest(w http.ResponseWriter, r *http.Request) {
 //api.r.HandleFunc("/news/{n}", api.posts).Methods(http.MethodGet)
 //метод добавления комментария.
 //api.r.HandleFunc("/news/{n}", api.posts).Methods(http.MethodGet)
+
+//http://localhost:8080/news/latest?page=1
