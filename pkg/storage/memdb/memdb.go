@@ -16,9 +16,22 @@ func (s *Store) Posts() ([]storage.Post, error) {
 	return posts, nil
 }
 
-func (s *Store) PostsN(n int) ([]storage.Post, error) {
+func (s *Store) PostsN(count int) ([]storage.Post, error) {
 	result := []storage.Post{}
-	for i := 0; i <= n; i++ {
+	for i := 0; i <= count; i++ {
+		if len(posts) <= i {
+			break
+		}
+		result = append(result, posts[i])
+	}
+	return result, nil
+}
+
+// получение публикаций по фильтру
+func (s *Store) PostsByFilter(sort string, direction string,
+	count int, offset int) ([]storage.Post, error) {
+	result := []storage.Post{}
+	for i := 0; i <= count; i++ {
 		if len(posts) <= i {
 			break
 		}

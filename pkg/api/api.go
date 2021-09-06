@@ -32,7 +32,7 @@ func (api *API) endpoints() {
 	//метод вывода списка новостей,
 	api.r.HandleFunc("/news/latest", api.latest).Methods(http.MethodGet)
 	//метод фильтра новостей,
-	//api.r.HandleFunc("/news/{n}", api.posts).Methods(http.MethodGet)
+	api.r.HandleFunc("/news/filter", api.filter).Methods(http.MethodGet)
 	//метод получения детальной новости,
 	//api.r.HandleFunc("/news/{n}", api.posts).Methods(http.MethodGet)
 	//метод добавления комментария.
@@ -50,15 +50,16 @@ func (api *API) test(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("test OK"))
 }
 
-//метод вывода списка новостей,
+//метод вывода списка новостей
+//http://localhost:8080/news/latest?page=1
 func (api *API) latest(w http.ResponseWriter, r *http.Request) {
-	ns := r.URL.Query().Get("page")
-	n, err := strconv.Atoi(ns)
+	countS := r.URL.Query().Get("page")
+	count, err := strconv.Atoi(countS)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	posts, err := api.db.PostsN(n)
+	posts, err := api.db.PostsN(count)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -71,11 +72,38 @@ func (api *API) latest(w http.ResponseWriter, r *http.Request) {
 	w.Write(bytes)
 }
 
-//метод фильтра новостей,
-//api.r.HandleFunc("/news/{n}", api.posts).Methods(http.MethodGet)
+//метод фильтра новостей
+//http://localhost:8080/news/filter?sort=date&direction=desc&count=10&offset=0
+func (api *API) filter(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	sort := q.Get("sort")
+	direction := q.Get("direction")
+	countS := q.Get("count")
+	count, err := strconv.Atoi(countS)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	offsetS := q.Get("offset")
+	offset, err := strconv.Atoi(offsetS)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	posts, err := api.db.PostsByFilter(sort, direction, count, offset)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	bytes, err := json.Marshal(posts)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(bytes)
+}
+
 //метод получения детальной новости,
 //api.r.HandleFunc("/news/{n}", api.posts).Methods(http.MethodGet)
 //метод добавления комментария.
 //api.r.HandleFunc("/news/{n}", api.posts).Methods(http.MethodGet)
-
-//http://localhost:8080/news/latest?page=1
