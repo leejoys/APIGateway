@@ -1,7 +1,7 @@
 package commentscheck
 
-type struct {}
+type some struct{}
 
-func ()  {
-	
+func one() {
+
 }

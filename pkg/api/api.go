@@ -2,8 +2,6 @@ package api
 
 import (
 	"apigateway/pkg/storage"
-	"apigateway/pkg/storage/memdbnews"
-	"apigateway/pkg/storage/mongocomm"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -19,10 +17,10 @@ type API struct {
 }
 
 // Конструктор объекта API
-func New() *API {
+func New(newsDB storage.IfaceNews, commentsDB storage.IfaceComments) *API {
 	api := API{}
-	api.newsDB = memdbnews.New()
-	api.commentsDB = mongocomm.New()
+	api.newsDB = newsDB
+	api.commentsDB = commentsDB
 	api.r = mux.NewRouter()
 	api.endpoints()
 	return &api
@@ -64,7 +62,7 @@ func (api *API) latest(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	posts, err := api.db.PostsLatestN(count)
+	posts, err := api.newsDB.PostsLatestN(count)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -95,7 +93,7 @@ func (api *API) filter(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	posts, err := api.db.PostsByFilter(sort, direction, count, offset)
+	posts, err := api.newsDB.PostsByFilter(sort, direction, count, offset)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -117,7 +115,7 @@ func (api *API) detailed(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	post, err := api.db.PostsDetailedN(id)
+	post, err := api.newsDB.PostsDetailedN(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -139,7 +137,7 @@ func (api *API) comments(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	comments, err := api.db.Comments(id)
+	comments, err := api.commentsDB.Comments(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

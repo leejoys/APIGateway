@@ -24,8 +24,12 @@ package main
 
 import (
 	"apigateway/pkg/api"
+	"apigateway/pkg/storage/memdbnews"
+	"apigateway/pkg/storage/mongocomm"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 )
 
 type server struct {
@@ -34,6 +38,17 @@ type server struct {
 
 func main() {
 	srv := server{}
-	srv.api = api.New()
+	newsDB := memdbnews.New()
+
+	// Создаём объект базы данных MongoDB.
+	pwd := os.Getenv("Cloud0pass")
+	connstr := fmt.Sprintf(
+		"mongodb+srv://sup:%s@cloud0.wspoq.mongodb.net/gonews?retryWrites=true&w=majority",
+		pwd)
+	commentsDB, err := mongocomm.New("comments", connstr)
+	if err != nil {
+		log.Fatalf("mongocomm.New error:%s", err)
+	}
+	srv.api = api.New(newsDB, commentsDB)
 	log.Fatal(http.ListenAndServe("localhost:8080", srv.api.Router()))
 }

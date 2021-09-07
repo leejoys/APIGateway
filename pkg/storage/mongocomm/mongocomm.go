@@ -2,78 +2,144 @@ package mongocomm
 
 import (
 	"apigateway/pkg/storage"
+	"context"
+	"errors"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// Хранилище данных.
-type Store struct{}
+var ErrorDuplicatePost error = errors.New("MongoDB E11000")
 
-// Конструктор объекта хранилища.
-func New() *Store {
-	return new(Store)
+// Хранилище данных.
+type Store struct {
+	c  *mongo.Client
+	db *mongo.Database
 }
 
-func (s *Store) Posts() ([]storage.Post, error) {
+//New - Конструктор объекта хранилища.
+func New(name string, connstr string) (*Store, error) {
+	client, err := mongo.Connect(context.Background(),
+		options.Client().ApplyURI(connstr))
+	if err != nil {
+		return nil, err
+	}
+	// проверка связи с БД
+	err = client.Ping(context.Background(), nil)
+	if err != nil {
+		client.Disconnect(context.Background())
+		return nil, err
+	}
+
+	s := &Store{c: client, db: client.Database(name)}
+	t := true
+	_, err = s.db.Collection("comments").Indexes().CreateOne(
+		context.Background(), mongo.IndexModel{
+			Keys:    bson.D{{Key: "title", Value: 1}},
+			Options: &options.IndexOptions{Unique: &t}})
+	if err != nil {
+		s.c.Disconnect(context.Background())
+		return nil, err
+	}
+
+	return s, nil
+}
+
+//Close - освобождение ресурса
+func (s *Store) Close() {
+	s.c.Disconnect(context.Background())
+}
+
+func (s *Store) DropDB() error {
+	return s.db.Drop(context.Background())
+}
+
+//Comments - получение всех комментариев
+func (s *Store) Comments(id int) ([]storage.Comment, error) {
+
+	coll := s.db.Collection("comments")
+	ctx := context.Background()
+	filter := bson.D{}
+	cur, err := coll.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(ctx)
+
+	comments := []storage.Comment{}
+	for cur.Next(ctx) {
+		var c storage.Comment
+		err = cur.Decode(&c)
+		if err != nil {
+			return nil, err
+		}
+		comments = append(comments, c)
+	}
+	return comments, nil
+}
+
+//PostsN - получение n последних публикаций
+func (s *Store) PostsN(n int) ([]storage.Post, error) {
+
+	coll := s.db.Collection("posts")
+	ctx := context.Background()
+	options := options.Find()
+	options.SetLimit(int64(n))
+	options.SetSort(bson.D{{Key: "$natural", Value: -1}})
+	filter := bson.D{}
+	cur, err := coll.Find(ctx, filter, options)
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(ctx)
+
+	posts := []storage.Post{}
+	for cur.Next(ctx) {
+		var p storage.Post
+		err = cur.Decode(&p)
+		if err != nil {
+			return nil, err
+		}
+		posts = append(posts, p)
+	}
 	return posts, nil
 }
 
-func (s *Store) PostsLatestN(count int) ([]storage.Post, error) {
-	result := []storage.Post{}
-	for i := 0; i <= count; i++ {
-		if len(posts) <= i {
-			break
-		}
-		result = append(result, posts[i])
+//AddComment - создание нового комментария
+func (s *Store) AddComment(p storage.Comment) error {
+	coll := s.db.Collection("posts")
+	_, err := coll.InsertOne(context.Background(), p)
+
+	if mongo.IsDuplicateKeyError(err) {
+		return ErrorDuplicatePost
 	}
-	return result, nil
+	return err
 }
 
-// получение новости n подробно
-func (s *Store) PostsDetailedN(n int) (storage.Post, error) {
-	if len(posts) <= n {
-		return posts[0], nil
+//UpdatePost - обновление по id значения title, content, pubtime и ink
+func (s *Store) UpdatePost(p storage.Post) error {
+	coll := s.db.Collection("posts")
+	filter := bson.D{{Key: "id", Value: p.ID}}
+	update := bson.D{{Key: "$set", Value: bson.D{
+		{Key: "title", Value: p.Title},
+		{Key: "content", Value: p.Content},
+		{Key: "pubtime", Value: p.PubTime},
+		{Key: "link", Value: p.Link}}}}
+	_, err := coll.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		return err
 	}
-	return posts[n], nil
-}
-
-// получение публикаций по фильтру
-func (s *Store) PostsByFilter(sort string, direction string,
-	count int, offset int) ([]storage.Post, error) {
-	result := []storage.Post{}
-	for i := 0; i <= count; i++ {
-		if len(posts) <= i {
-			break
-		}
-		result = append(result, posts[i])
-	}
-	return result, nil
-}
-
-func (s *Store) AddPost(storage.Post) error {
 	return nil
 }
-func (s *Store) UpdatePost(storage.Post) error {
-	return nil
-}
-func (s *Store) DeletePost(storage.Post) error {
-	return nil
-}
-func (s *Store) Close() {
-}
 
-var posts = []storage.Post{
-	{
-		ID:      1,
-		Title:   "Effective Go",
-		Content: "Go is a new language. Although it borrows ideas from existing languages, it has unusual properties that make effective Go programs different in character from programs written in its relatives. A straightforward translation of a C++ or Java program into Go is unlikely to produce a satisfactory result—Java programs are written in Java, not Go. On the other hand, thinking about the problem from a Go perspective could produce a successful but quite different program. In other words, to write Go well, it's important to understand its properties and idioms. It's also important to know the established conventions for programming in Go, such as naming, formatting, program construction, and so on, so that programs you write will be easy for other Go programmers to understand.",
-	},
-	{
-		ID:      2,
-		Title:   "The Go Memory Model",
-		Content: "The Go memory model specifies the conditions under which reads of a variable in one goroutine can be guaranteed to observe values produced by writes to the same variable in a different goroutine.",
-	},
-	{
-		ID:      3,
-		Title:   "Third post",
-		Content: "Third post content.",
-	},
+//DeletePost - удаляет пост по id
+func (s *Store) DeletePost(p storage.Post) error {
+	coll := s.db.Collection("posts")
+	filter := bson.D{{Key: "id", Value: p.ID}}
+	_, err := coll.DeleteOne(context.Background(), filter)
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -41,7 +41,7 @@ type Comment struct {
 	//PubTime int64  `xml:"-" json:"PubTime"`           //время публикации для БД и фронта
 }
 
-// Interface задаёт контракт на работу с БД.
+// IfaceNews задаёт контракт на работу с БД новостей.
 type IfaceNews interface {
 	Posts() ([]Post, error)           // получение всех публикаций
 	PostsDetailedN(int) (Post, error) // получение новости n подробно
@@ -55,16 +55,12 @@ type IfaceNews interface {
 	//DropDB() error              //удаление БД
 }
 
-// Interface задаёт контракт на работу с БД.
+// IfaceComments задаёт контракт на работу с БД комментариев.
 type IfaceComments interface {
-	Posts() ([]Post, error)           // получение всех публикаций
-	PostsDetailedN(int) (Post, error) // получение новости n подробно
-	PostsLatestN(int) ([]Post, error) // получение страницы n последних публикаций
-	PostsByFilter(string, string,
-		int, int) ([]Post, error) // получение публикаций по фильтру
-	AddPost(Post) error    // создание новой публикации
-	UpdatePost(Post) error // обновление публикации
-	DeletePost(Post) error // удаление публикации по ID
-	Close()                // освобождение ресурса
+	Comments(int) ([]Comment, error) // получение всех публикаций
+	AddComment(Comment) error        // создание новой публикации
+	UpdatePost(Post) error           // обновление публикации
+	DeletePost(Post) error           // удаление публикации по ID
+	Close()                          // освобождение ресурса
 	//DropDB() error              //удаление БД
 }
