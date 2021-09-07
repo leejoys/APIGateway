@@ -59,8 +59,8 @@ type IfaceNews interface {
 type IfaceComments interface {
 	Comments(int) ([]Comment, error) // получение всех публикаций
 	AddComment(Comment) error        // создание новой публикации
-	UpdatePost(Post) error           // обновление публикации
-	DeletePost(Post) error           // удаление публикации по ID
+	UpdateComment(Comment) error     // обновление публикации
+	DeleteComment(Comment) error     // удаление публикации по ID
 	Close()                          // освобождение ресурса
 	//DropDB() error              //удаление БД
 }

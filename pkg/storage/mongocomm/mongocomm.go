@@ -79,10 +79,10 @@ func (s *Store) Comments(id int) ([]storage.Comment, error) {
 	return comments, nil
 }
 
-//PostsN - получение n последних публикаций
-func (s *Store) PostsN(n int) ([]storage.Post, error) {
+//CommentsN - получение n последних комментариев
+func (s *Store) PostsN(n int) ([]storage.Comment, error) {
 
-	coll := s.db.Collection("posts")
+	coll := s.db.Collection("comments")
 	ctx := context.Background()
 	options := options.Find()
 	options.SetLimit(int64(n))
@@ -94,22 +94,22 @@ func (s *Store) PostsN(n int) ([]storage.Post, error) {
 	}
 	defer cur.Close(ctx)
 
-	posts := []storage.Post{}
+	comments := []storage.Comment{}
 	for cur.Next(ctx) {
-		var p storage.Post
-		err = cur.Decode(&p)
+		var c storage.Comment
+		err = cur.Decode(&c)
 		if err != nil {
 			return nil, err
 		}
-		posts = append(posts, p)
+		comments = append(comments, c)
 	}
-	return posts, nil
+	return comments, nil
 }
 
 //AddComment - создание нового комментария
-func (s *Store) AddComment(p storage.Comment) error {
-	coll := s.db.Collection("posts")
-	_, err := coll.InsertOne(context.Background(), p)
+func (s *Store) AddComment(c storage.Comment) error {
+	coll := s.db.Collection("comments")
+	_, err := coll.InsertOne(context.Background(), c)
 
 	if mongo.IsDuplicateKeyError(err) {
 		return ErrorDuplicatePost
@@ -117,15 +117,15 @@ func (s *Store) AddComment(p storage.Comment) error {
 	return err
 }
 
-//UpdatePost - обновление по id значения title, content, pubtime и ink
-func (s *Store) UpdatePost(p storage.Post) error {
-	coll := s.db.Collection("posts")
-	filter := bson.D{{Key: "id", Value: p.ID}}
+//UpdateComment - обновление по id значения idparent, content, idchild и idnews
+func (s *Store) UpdateComment(c storage.Comment) error {
+	coll := s.db.Collection("comments")
+	filter := bson.D{{Key: "id", Value: c.ID}}
 	update := bson.D{{Key: "$set", Value: bson.D{
-		{Key: "title", Value: p.Title},
-		{Key: "content", Value: p.Content},
-		{Key: "pubtime", Value: p.PubTime},
-		{Key: "link", Value: p.Link}}}}
+		{Key: "idparent", Value: c.IDParent},
+		{Key: "content", Value: c.Content},
+		{Key: "idchild", Value: c.IDChild},
+		{Key: "idnews", Value: c.IDNews}}}}
 	_, err := coll.UpdateOne(context.Background(), filter, update)
 	if err != nil {
 		return err
@@ -133,10 +133,10 @@ func (s *Store) UpdatePost(p storage.Post) error {
 	return nil
 }
 
-//DeletePost - удаляет пост по id
-func (s *Store) DeletePost(p storage.Post) error {
-	coll := s.db.Collection("posts")
-	filter := bson.D{{Key: "id", Value: p.ID}}
+//DeleteComment - удаляет комментарий по id
+func (s *Store) DeleteComment(c storage.Comment) error {
+	coll := s.db.Collection("comments")
+	filter := bson.D{{Key: "id", Value: c.ID}}
 	_, err := coll.DeleteOne(context.Background(), filter)
 	if err != nil {
 		return err
