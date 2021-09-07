@@ -32,16 +32,31 @@ type NewsShortDetailed struct {
 
 //Модель комментария
 type Comment struct {
-	ID      int    `xml:"-" json:"ID"`                // номер записи
-	Title   string `xml:"title" json:"Title"`         // заголовок публикации
-	Content string `xml:"description" json:"Content"` // содержание публикации
-	PubDate string `xml:"pubDate" json:"-"`           // время публикации из RSS
-	PubTime int64  `xml:"-" json:"PubTime"`           //время публикации для БД и фронта
-	Link    string `xml:"link" json:"Link"`           // ссылка на источник
+	ID       int    `xml:"-" json:"ID"`                // номер записи
+	IDParent int    `xml:"-" json:"IDParent"`          // номер записи
+	IDChild  int    `xml:"-" json:"IDChild"`           // номер записи
+	IDNews   int    `xml:"-" json:"IDNews"`            // номер записи
+	Content  string `xml:"description" json:"Content"` // содержание публикации
+	//PubDate string `xml:"pubDate" json:"-"`           // время публикации из RSS
+	//PubTime int64  `xml:"-" json:"PubTime"`           //время публикации для БД и фронта
 }
 
 // Interface задаёт контракт на работу с БД.
-type Interface interface {
+type IfaceNews interface {
+	Posts() ([]Post, error)           // получение всех публикаций
+	PostsDetailedN(int) (Post, error) // получение новости n подробно
+	PostsLatestN(int) ([]Post, error) // получение страницы n последних публикаций
+	PostsByFilter(string, string,
+		int, int) ([]Post, error) // получение публикаций по фильтру
+	AddPost(Post) error    // создание новой публикации
+	UpdatePost(Post) error // обновление публикации
+	DeletePost(Post) error // удаление публикации по ID
+	Close()                // освобождение ресурса
+	//DropDB() error              //удаление БД
+}
+
+// Interface задаёт контракт на работу с БД.
+type IfaceComments interface {
 	Posts() ([]Post, error)           // получение всех публикаций
 	PostsDetailedN(int) (Post, error) // получение новости n подробно
 	PostsLatestN(int) ([]Post, error) // получение страницы n последних публикаций

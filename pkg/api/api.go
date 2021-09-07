@@ -2,7 +2,8 @@ package api
 
 import (
 	"apigateway/pkg/storage"
-	"apigateway/pkg/storage/memdb"
+	"apigateway/pkg/storage/memdbnews"
+	"apigateway/pkg/storage/mongocomm"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -12,14 +13,16 @@ import (
 
 // Программный интерфейс приложения
 type API struct {
-	db storage.Interface
-	r  *mux.Router
+	newsDB     storage.IfaceNews
+	commentsDB storage.IfaceComments
+	r          *mux.Router
 }
 
 // Конструктор объекта API
 func New() *API {
 	api := API{}
-	api.db = memdb.New()
+	api.newsDB = memdbnews.New()
+	api.commentsDB = mongocomm.New()
 	api.r = mux.NewRouter()
 	api.endpoints()
 	return &api

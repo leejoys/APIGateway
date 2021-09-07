@@ -1,4 +1,4 @@
-package memdb
+package memdbnews
 
 import (
 	"apigateway/pkg/storage"
