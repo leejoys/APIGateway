@@ -122,9 +122,9 @@ func (s *Store) UpdateComment(c storage.Comment) error {
 	coll := s.db.Collection("comments")
 	filter := bson.D{{Key: "id", Value: c.ID}}
 	update := bson.D{{Key: "$set", Value: bson.D{
-		{Key: "idparent", Value: c.IDParent},
+		{Key: "idparent", Value: c.ParentID},
 		{Key: "content", Value: c.Content},
-		{Key: "idchild", Value: c.IDChild},
+		{Key: "idchild", Value: c.ChildsIDs},
 		{Key: "idnews", Value: c.IDNews}}}}
 	_, err := coll.UpdateOne(context.Background(), filter, update)
 	if err != nil {

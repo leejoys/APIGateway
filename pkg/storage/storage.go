@@ -32,11 +32,11 @@ type NewsShortDetailed struct {
 
 //Модель комментария
 type Comment struct {
-	ID       int    `xml:"-" json:"ID"`                // номер записи
-	IDParent int    `xml:"-" json:"IDParent"`          // номер записи
-	IDChild  int    `xml:"-" json:"IDChild"`           // номер записи
-	IDNews   int    `xml:"-" json:"IDNews"`            // номер записи
-	Content  string `xml:"description" json:"Content"` // содержание публикации
+	ID        int    `xml:"-" json:"ID"`                // номер записи
+	ParentID  int    `xml:"-" json:"IDParent"`          // номер записи
+	ChildsIDs []int  `xml:"-" json:"ChildsIDs"`         // номер записи
+	IDNews    int    `xml:"-" json:"IDNews"`            // номер записи
+	Content   string `xml:"description" json:"Content"` // содержание публикации
 	//PubDate string `xml:"pubDate" json:"-"`           // время публикации из RSS
 	//PubTime int64  `xml:"-" json:"PubTime"`           //время публикации для БД и фронта
 }
